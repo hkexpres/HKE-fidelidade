@@ -81,26 +81,40 @@ async function loadSettings() {
 }
 
 function updateHomeUI() {
-  // Update loyalty benefit text on home
+  const loyaltyVal = appSettings.loyaltyValue || '50% de desconto ou 8 gyozas grátis';
+  const welcomeVal = appSettings.welcomeValue || '15% de desconto';
+  const stampsN = STAMPS_TO_WIN || 5;
+
+  // Home — loyalty benefit text
   const loyaltyEl = document.getElementById('home-loyalty-benefit');
-  if (loyaltyEl) {
-    loyaltyEl.textContent = STAMPS_TO_WIN + ' selos = ' + (appSettings.loyaltyValue || '50% de desconto ou 8 gyozas grátis') + '!';
-  }
-  // Show/hide welcome hook button based on settings
+  if (loyaltyEl) loyaltyEl.textContent = stampsN + ' selos = ' + loyaltyVal + '!';
+
+  // Home — welcome hook button
   const hookEl = document.getElementById('home-welcome-hook');
   if (hookEl) {
     if (appSettings.welcomeEnabled === false) {
       hookEl.style.display = 'none';
     } else {
       hookEl.style.display = 'block';
-      hookEl.textContent = '🎁 Ganhe ' + (appSettings.welcomeValue || '15% de desconto') + ' na 1ª compra — Cadastre-se agora';
+      hookEl.textContent = '🎁 Ganhe ' + welcomeVal + ' na 1ª compra — Cadastre-se agora';
     }
   }
-  // Update prize box description on card
+
+  // Card — prize box description
   const prizeDescEl = document.getElementById('prize-desc');
-  if (prizeDescEl) {
-    prizeDescEl.textContent = appSettings.loyaltyValue || '50% de desconto ou 8 gyozas grátis';
-  }
+  if (prizeDescEl) prizeDescEl.textContent = loyaltyVal;
+
+  // Card — welcome banner discount value
+  const wbDiscountEl = document.getElementById('wb-discount-val');
+  if (wbDiscountEl) wbDiscountEl.textContent = welcomeVal;
+
+  // Card — welcome banner in modal
+  const welcomeBenefitEl = document.getElementById('welcome-benefit-label');
+  if (welcomeBenefitEl) welcomeBenefitEl.textContent = welcomeVal + ' no próximo pedido';
+
+  // Card — loyalty coupon benefit label (when unlocked)
+  const loyaltyBenefitEl = document.getElementById('loyalty-benefit-label');
+  if (loyaltyBenefitEl) loyaltyBenefitEl.textContent = loyaltyVal;
 }
 
 function formatBenefit(type, value) {
@@ -274,6 +288,8 @@ async function renderCard() {
 
     document.getElementById('stamp-msg').className = 'msg hidden';
     document.getElementById('stamp-code-input').value = '';
+    // Sync all dynamic benefit texts
+    updateHomeUI();
   } catch(e) { console.error(e); }
 }
 
@@ -377,7 +393,8 @@ window.redeemCode = async () => {
 
 window.copyLoyaltyCode = () => {
   const code = document.getElementById('coupon-code-val').textContent;
-  const msg = '🥡 *Hong Kong Express*\nOlá! Completei meus 5 selos e quero resgatar meu prêmio!\n\n🏆 Meu código: *' + code + '*\n\n📲 Número cadastrado: ' + (currentUser ? currentUser.phone : '') + '\n\nQuero meu benefício: 50% de desconto ou 8 gyozas grátis! 🎉';
+  const loyaltyBenefitText = appSettings.loyaltyValue || '50% de desconto ou 8 gyozas grátis';
+  const msg = '🥡 *Hong Kong Express*\nOlá! Completei meus 5 selos e quero resgatar meu prêmio!\n\n🏆 Meu código: *' + code + '*\n\n📲 Número cadastrado: ' + (currentUser ? currentUser.phone : '') + '\n\nBenefício: ' + loyaltyBenefitText + ' 🎉';
   const done = () => window.open('https://wa.me/558487068744?text=' + encodeURIComponent(msg), '_blank');
   if (navigator.clipboard) navigator.clipboard.writeText(msg).then(done).catch(done);
   else done();
@@ -385,7 +402,8 @@ window.copyLoyaltyCode = () => {
 
 window.copyWelcomeCode = () => {
   const code = document.getElementById('welcome-code-val').textContent;
-  const msg = '🥡 *Hong Kong Express*\nOlá! Me cadastrei no programa de fidelidade e quero usar meu cupom de boas-vindas.\n\n🎁 Meu código: *' + code + '*\n\n📲 Número cadastrado: ' + (currentUser ? currentUser.phone : '') + '\n\nGostaria de aplicar meu desconto de 15% no próximo pedido! 😊';
+  const welcomeBenefitText = appSettings.welcomeValue || '15% de desconto';
+  const msg = '🥡 *Hong Kong Express*\nOlá! Me cadastrei no programa de fidelidade e quero usar meu cupom de boas-vindas.\n\n🎁 Meu código: *' + code + '*\n\n📲 Número cadastrado: ' + (currentUser ? currentUser.phone : '') + '\n\nBenefício: ' + welcomeBenefitText + ' 😊';
   const done = () => {
     window.open('https://wa.me/558487068744?text=' + encodeURIComponent(msg), '_blank');
     document.getElementById('modal-welcome').classList.remove('show');
@@ -950,7 +968,8 @@ window.burnWelcomeCoupon = (phone, name, code) => window.burnCoupon(phone, name,
 // ACTIVATE WELCOME COUPON
 // ══════════════════════════════════
 window.activateWelcomeCoupon = async (phone, name) => {
-  if (!confirm('Liberar cupom de 15% OFF para ' + name + '?\nConfirme que este cliente já realizou o 1º pedido.')) return;
+  const wLabel = appSettings.welcomeValue || '15% de desconto';
+  if (!confirm('Liberar cupom de ' + wLabel + ' para ' + name + '?\nConfirme que este cliente já realizou o 1º pedido.')) return;
   try {
     const clientRef = doc(db,'clients',phone);
     const snap = await getDoc(clientRef);
@@ -1383,7 +1402,7 @@ window.showToast = (msg) => {
     <div id="welcome-banner" class="welcome-banner" style="display:none">
       <div class="wb-left">
         <div class="wb-label">🎉 Cupom de boas-vindas</div>
-        <div class="wb-discount">15% OFF</div>
+        <div class="wb-discount" id="wb-discount-val">15% OFF</div>
         <div class="wb-sub">na sua primeira compra</div>
       </div>
       <div style="text-align:right">
