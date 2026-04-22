@@ -45,8 +45,10 @@ window.showView = (id) => {
 // ══════════════════════════════════
 // LOGO INJECT
 // ══════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  // Auto-login
+document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Load settings from Firebase FIRST — this drives all UI text
+  await loadSettings();
+  // 2. Auto-login
   const saved = localStorage.getItem('hke_user');
   if (saved) {
     currentUser = JSON.parse(saved);
@@ -1559,15 +1561,13 @@ window.showToast = (msg) => {
     <div class="admin-section">
       <h2>Registros</h2>
       <button class="btn-admin" style="background:rgba(100,150,255,.1);color:#6496FF;border:1px solid rgba(100,150,255,.25);margin-bottom:10px" onclick="showStampLog()">📋 Registro de selos</button>
-      <div id="rules-reminder" style="font-size:11px;color:var(--gray2);background:var(--black);border-radius:8px;padding:10px;margin-top:4px;line-height:1.6">
-        ⚠️ Para o registro funcionar, adicione <strong style="color:var(--yellow)">stampLog</strong> nas regras do Firebase Console → Firestore → Regras
-      </div>
+
     </div>
 
     <div class="admin-section">
       <h2>Segurança</h2>
       <button class="btn-admin btn-changepw" onclick="showChangePw()">🔐 Alterar senha do painel</button>
-      <button class="btn-admin btn-danger" onclick="resetAllData()">⚠️ Resetar sessão local</button>
+
     </div>
   </div>
 </div>
